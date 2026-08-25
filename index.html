@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ผลการเบิกและใช้จ่ายงบยุทธศาสตร์และงบประมาณภาพรวมจังหวัดลำพูน</title>
+    <!-- Google Fonts: Sarabun -->
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- ECharts -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background-color: #f0f4f8;
+            color: #1a202c;
+        }
+        .dashboard-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .section-card {
+            background-color: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            margin-bottom: 40px;
+            padding: 25px;
+            border-top: 6px solid;
+        }
+        .header-title {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #2c3e50;
+        }
+        /* Table Styles */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 0.95rem;
+        }
+        .data-table th, .data-table td {
+            border: 1px solid #e2e8f0;
+            padding: 10px;
+            text-align: right;
+        }
+        .data-table th {
+            text-align: center;
+            font-weight: 700;
+        }
+        .data-table td:first-child {
+            text-align: left;
+            font-weight: 600;
+            background-color: #f8fafc;
+        }
+        /* Color Logic */
+        .text-pos { color: #000000 !important; font-weight: 500; }
+        .text-neg { color: #ef4444 !important; font-weight: 700; }
+
+        /* Charts */
+        .chart-wrapper {
+            position: relative;
+            height: 400px;
+            margin-top: 20px;
+        }
+        .gauge-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .gauge-card {
+            background: #ffffff;
+            border: 1px solid #edf2f7;
+            border-radius: 12px;
+            padding: 15px;
+            height: 320px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .gauge-chart {
+            width: 100%;
+            height: 100%;
+        }
+        .unit-badge {
+            position: absolute;
+            top: 0;
+            right: 10px;
+            background: #e2e8f0;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            color: #475569;
+            z-index: 10;
+        }
+        
+        @media (max-width: 768px) {
+            .gauge-row { grid-template-columns: 1fr; }
+            .data-table th, .data-table td { font-size: 0.8rem; padding: 6px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Main Header -->
+    <div class="bg-gradient-to-r from-blue-900 to-indigo-800 text-white py-10 shadow-lg mb-8">
+        <div class="container mx-auto px-4 text-center">
+            <h1 class="text-3xl font-bold mb-2">ผลการเบิกและใช้จ่ายงบยุทธศาสตร์และงบประมาณภาพรวมจังหวัดลำพูน</h1>
+            <p class="text-xl text-blue-100">ตั้งแต่ต้นปีงบประมาณ พ.ศ.2569 ถึง สิ้นเดือน กรกฎาคม 2569</p>
+        </div>
+    </div>
+
+    <div id="app" class="dashboard-container">
+        <!-- Content injected by JS -->
+    </div>
+
+    <!-- Footer -->
+    <div class="container mx-auto px-4 py-8 text-right border-t border-gray-300">
+        <p class="text-gray-600 font-bold text-lg">กลุ่มงานระบบบริหารการคลัง สำนักงานคลังจังหวัดลำพูน</p>
+    </div>
+
+    <script>
+        // --- DATA PREPARATION ---
+        // Format: [Alloc, PO, Disb, %Disb, TargetDisb, +/-Disb, RankDisb, Spend, %Spend, TargetSpend, +/-Spend, RankSpend, Balance]
+        const rawData = [
+            {
+                id: 'strat',
+                title: 'ผลการเบิกจ่ายและใช้จ่ายงบยุทธศาสตร์จังหวัดลำพูน',
+                color: 'border-green-500',
+                data: {
+                    regular: [46.987,	14.872,	24.366,	51.86,	98,	-46.14,	61,	39.238,	83.51,	100,	-16.49,	16,	7.749],
+                    invest:  [147.006,	36.99,	109.735,	74.65,	75,	-0.35,	14,	146.725,	99.81,	100,	-0.19,	6,	0.281],
+                    overall: [193.993,	51.862,	134.101,	69.13,	93,	-23.87,	16,	185.963,	95.86,	100,	-4.14,	7,	8.030]
+                }
+            },
+            {
+                id: 'overview',
+                title: 'ผลการเบิกจ่ายและใช้จ่ายงบภาพรวมจังหวัดลำพูน',
+                color: 'border-orange-500',
+                data: {
+                    regular: [3028.096,	31.968,	2626.951,	86.75,	98,	-11.25,	38,	2658.919,	87.81,	100,	-12.19,	32,	369.177],
+                    invest:  [1970.45,	436.031,	1445.489,	73.36,	75,	-1.64,	17,	1881.519,	95.49,	100,	-4.51,	1,	88.930],
+                    overall: [4998.545,	467.999,	4072.44,	81.47,	93,	-11.53,	13,	4540.438,	90.84,	100,	-9.16,	10,	458.107]
+                }
+            }
+        ];
+
+        // --- UTILS ---
+        const fmtNum = (n) => n.toLocaleString('en-US', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+        const fmtPct = (n) => n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const getCls = (n) => n < 0 ? 'text-neg' : 'text-pos';
+
+        // --- RENDER ---
+        const app = document.getElementById('app');
+
+        rawData.forEach(dashboard => {
+            const section = document.createElement('div');
+            section.className = `section-card ${dashboard.color}`;
+            
+            // 1. Header
+            let html = `<h2 class="text-2xl font-bold mb-6 text-gray-800 border-b pb-4">${dashboard.title}</h2>`;
+
+            // 2. Part 1: Table
+            html += `<div class="mb-8">
+                <h3 class="text-lg font-semibold text-gray-700 mb-2">ส่วนที่ 1: ตารางรายงานข้อมูล (หน่วย: ล้านบาท)</h3>
+                <div class="overflow-x-auto">
+                    <table class="data-table">
+                        <thead>
+                            <tr class="bg-gray-100 text-gray-700">
+                                <th rowspan="2">ประเภท</th>
+                                <th rowspan="2" class="bg-blue-50">งบจัดสรร</th>
+                                <th rowspan="2">PO</th>
+                                <th colspan="5" class="bg-green-50 text-green-800">ผลการเบิกจ่าย</th>
+                                <th colspan="5" class="bg-orange-50 text-orange-800">ผลการใช้จ่าย</th>
+                                <th rowspan="2" class="bg-gray-50">คงเหลือ</th>
+                            </tr>
+                            <tr class="text-sm">
+                                <th class="bg-green-50">เบิกจ่าย</th>
+                                <th class="bg-green-50">%</th>
+                                <th class="bg-green-50">เป้า</th>
+                                <th class="bg-green-50">+/-</th>
+                                <th class="bg-green-50">ลำดับ</th>
+                                <th class="bg-orange-50">ใช้จ่าย</th>
+                                <th class="bg-orange-50">%</th>
+                                <th class="bg-orange-50">เป้า</th>
+                                <th class="bg-orange-50">+/-</th>
+                                <th class="bg-orange-50">ลำดับ</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+            
+            ['regular', 'invest', 'overall'].forEach((key, i) => {
+                const rowName = key === 'regular' ? 'ประจำ' : (key === 'invest' ? 'ลงทุน' : 'ภาพรวม');
+                const d = dashboard.data[key];
+                html += `<tr>
+                    <td>${rowName}</td>
+                    <td class="${getCls(d[0])}">${fmtNum(d[0])}</td>
+                    <td class="${getCls(d[1])}">${fmtNum(d[1])}</td>
+                    <td class="${getCls(d[2])}">${fmtNum(d[2])}</td>
+                    <td class="${getCls(d[3])}">${fmtPct(d[3])}</td>
+                    <td class="${getCls(d[4])}">${fmtPct(d[4])}</td>
+                    <td class="${getCls(d[5])}">${fmtPct(d[5])}</td>
+                    <td class="${getCls(d[6])}">${d[6]}</td>
+                    <td class="${getCls(d[7])}">${fmtNum(d[7])}</td>
+                    <td class="${getCls(d[8])}">${fmtPct(d[8])}</td>
+                    <td class="${getCls(d[9])}">${fmtPct(d[9])}</td>
+                    <td class="${getCls(d[10])}">${fmtPct(d[10])}</td>
+                    <td class="${getCls(d[11])}">${d[11]}</td>
+                    <td class="${getCls(d[12])}">${fmtNum(d[12])}</td>
+                </tr>`;
+            });
+            html += `</tbody></table></div></div>`;
+
+            // 3. Part 2: Bar Chart
+            html += `<div class="mb-10">
+                <h3 class="text-lg font-semibold text-gray-700 mb-2">ส่วนที่ 2: กราฟแสดงยอดงบประมาณ</h3>
+                <div class="chart-wrapper">
+                    <div class="unit-badge">หน่วย : ล้านบาท</div>
+                    <div id="bar-${dashboard.id}" style="width:100%; height:100%;"></div>
+                </div>
+            </div>`;
+
+            // 4. Part 3: Gauge Charts (Disbursement)
+            html += `<div class="mb-10">
+                <h3 class="text-lg font-semibold text-green-700 mb-4 border-l-4 border-green-500 pl-2">ส่วนที่ 3: กราฟเกจวัดผลการเบิกจ่าย (ร้อยละ)</h3>
+                <div class="gauge-row">
+                    <div class="gauge-card"><div id="gd-reg-${dashboard.id}" class="gauge-chart"></div></div>
+                    <div class="gauge-card"><div id="gd-inv-${dashboard.id}" class="gauge-chart"></div></div>
+                    <div class="gauge-card"><div id="gd-tot-${dashboard.id}" class="gauge-chart"></div></div>
+                </div>
+            </div>`;
+
+            // 5. Part 4: Gauge Charts (Expenditure)
+            html += `<div class="mb-6">
+                <h3 class="text-lg font-semibold text-orange-700 mb-4 border-l-4 border-orange-500 pl-2">ส่วนที่ 4: กราฟเกจวัดผลการใช้จ่าย (ร้อยละ)</h3>
+                <div class="gauge-row">
+                    <div class="gauge-card"><div id="gs-reg-${dashboard.id}" class="gauge-chart"></div></div>
+                    <div class="gauge-card"><div id="gs-inv-${dashboard.id}" class="gauge-chart"></div></div>
+                    <div class="gauge-card"><div id="gs-tot-${dashboard.id}" class="gauge-chart"></div></div>
+                </div>
+            </div>`;
+
+            section.innerHTML = html;
+            app.appendChild(section);
+
+            // --- INIT ECHARTS ---
+            setTimeout(() => {
+                const d = dashboard.data;
+
+                // 1. Bar Chart
+                const barChart = echarts.init(document.getElementById(`bar-${dashboard.id}`));
+                barChart.setOption({
+                    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+                    legend: { top: 'bottom' },
+                    grid: { left: '3%', right: '4%', bottom: '10%', top: '15%', containLabel: true },
+                    xAxis: { type: 'category', data: ['ประจำ', 'ลงทุน', 'ภาพรวม'] },
+                    yAxis: { type: 'value' },
+                    series: [
+                        { name: 'งบจัดสรร', type: 'bar', data: [d.regular[0], d.invest[0], d.overall[0]], itemStyle: { color: '#60a5fa' }, label: { show: true, position: 'top', formatter: '{c}' } },
+                        { name: 'เบิกจ่าย', type: 'bar', data: [d.regular[2], d.invest[2], d.overall[2]], itemStyle: { color: '#4ade80' }, label: { show: true, position: 'top', formatter: '{c}' } },
+                        { name: 'ใช้จ่าย', type: 'bar', data: [d.regular[7], d.invest[7], d.overall[7]], itemStyle: { color: '#fb923c' }, label: { show: true, position: 'top', formatter: '{c}' } }
+                    ]
+                });
+
+                // 2. Gauge Helper
+                const createGauge = (domId, title, val, target, colorMain) => {
+                    const chart = echarts.init(document.getElementById(domId));
+                    const maxVal = Math.max(100, target * 1.2);
+                    
+                    chart.setOption({
+                        title: { text: title, left: 'center', top: '0%', textStyle: { fontSize: 16, color: '#333', fontFamily: 'Sarabun' } },
+                        series: [
+                            {
+                                type: 'gauge',
+                                center: ['50%', '65%'],
+                                radius: '85%',
+                                startAngle: 180, endAngle: 0,
+                                min: 0, max: maxVal,
+                                itemStyle: { color: colorMain },
+                                progress: { show: true, width: 25 },
+                                pointer: { show: true, length: '60%', width: 6, itemStyle: { color: 'auto' } }, // Main pointer
+                                axisLine: { lineStyle: { width: 25, color: [[1, '#E6EBF8']] } },
+                                axisTick: { show: false },
+                                splitLine: { show: false },
+                                axisLabel: {show: false},
+                                anchor: { show: true, showAbove: true, size: 18, itemStyle: { borderWidth: 4, borderColor: colorMain } },
+                                detail: {
+                                    valueAnimation: true,
+                                    fontSize: 24,
+                                    offsetCenter: [0, '25%'],
+                                    formatter: (value) => `{val|${value.toFixed(2)}%}\n{tgt|เป้าหมาย: ${target}%}`,
+                                    rich: {
+                                        val: { fontSize: 24, fontWeight: 'bold', color: '#1a202c', padding: [10, 0], fontFamily: 'Sarabun' },
+                                        tgt: { fontSize: 14, color: '#64748b', fontFamily: 'Sarabun' }
+                                    }
+                                },
+                                data: [
+                                    { value: val, name: '' }, 
+                                ]
+                            },
+                            // Add a second series for the Red Target Line
+                            {
+                                type: 'gauge',
+                                center: ['50%', '65%'],
+                                radius: '92%', // Slightly larger radius for visibility
+                                startAngle: 180, endAngle: 0,
+                                min: 0, max: maxVal,
+                                splitLine: { show: false },
+                                axisLine: { show: false },
+                                axisLabel: { show: false },
+                                pointer: { 
+                                    show: true, 
+                                    icon: 'path://M0,0 L2,0 L2,20 L0,20 Z', // Custom rectangle shape
+                                    length: '35%', 
+                                    width: 6, 
+                                    offsetCenter: [0, '-96%'], // Position near the outer rim
+                                    itemStyle: { color: '#ff0000' } 
+                                },
+                                detail: { show: false },
+                                data: [{ value: target }]
+                            }
+                        ]
+                    });
+                    window.addEventListener('resize', () => chart.resize());
+                };
+
+                // Render Gauges
+                // Disbursement (Green Theme)
+                createGauge(`gd-reg-${dashboard.id}`, 'เบิกจ่าย (ประจำ)', d.regular[3], d.regular[4], '#22c55e');
+                createGauge(`gd-inv-${dashboard.id}`, 'เบิกจ่าย (ลงทุน)', d.invest[3], d.invest[4], '#22c55e');
+                createGauge(`gd-tot-${dashboard.id}`, 'เบิกจ่าย (ภาพรวม)', d.overall[3], d.overall[4], '#22c55e');
+
+                // Expenditure (Orange Theme)
+                createGauge(`gs-reg-${dashboard.id}`, 'ใช้จ่าย (ประจำ)', d.regular[8], d.regular[9], '#f97316');
+                createGauge(`gs-inv-${dashboard.id}`, 'ใช้จ่าย (ลงทุน)', d.invest[8], d.invest[9], '#f97316');
+                createGauge(`gs-tot-${dashboard.id}`, 'ใช้จ่าย (ภาพรวม)', d.overall[8], d.overall[9], '#f97316');
+            }, 0);
+        });
+
+    </script>
+</body>
+</html>
